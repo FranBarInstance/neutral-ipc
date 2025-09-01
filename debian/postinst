@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e
+
+if ! id -u neutral-ipc > /dev/null 2>&1; then
+    adduser --system --group --no-create-home --home /nonexistent --shell /bin/false neutral-ipc
+    echo "Created system user: neutral-ipc"
+fi
+
+mkdir -p /var/log/neutral-ipc/
+chown neutral-ipc:neutral-ipc /var/log/neutral-ipc/
+chmod 755 /var/log/neutral-ipc/
+touch /var/log/neutral-ipc/neutral-ipc.log
+chown neutral-ipc:neutral-ipc /var/log/neutral-ipc/neutral-ipc.log
+chmod 644 /var/log/neutral-ipc/neutral-ipc.log
+
+if [ -f "/etc/neutral-ipc-cfg.json" ]; then
+    chown root:neutral-ipc /etc/neutral-ipc-cfg.json
+    chmod 640 /etc/neutral-ipc-cfg.json
+    echo "Set permissions on configuration file"
+fi
+
+systemctl daemon-reload
+if systemctl enable neutral-ipc.service; then
+    echo "Service neutral-ipc enabled successfully"
+else
+    echo "Warning: Failed to enable neutral-ipc service" >&2
+fi
+
+echo "neutral-ipc installation completed successfully"

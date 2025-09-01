@@ -1,0 +1,17 @@
+[Unit]
+Description=Neutral TS IPC Server
+After=network.target
+Documentation=https://franbarinstance.github.io/neutral-ipc/
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/neutral-ipc
+Restart=on-failure
+User=neutral-ipc
+Group=neutral-ipc
+StandardOutput=file:/var/log/neutral-ipc/neutral-ipc.log
+StandardError=file:/var/log/neutral-ipc/neutral-ipc.log
+SyslogIdentifier=neutral-ipc
+
+[Install]
+WantedBy=multi-user.target

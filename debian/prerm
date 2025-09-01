@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+if systemctl is-active --quiet neutral-ipc.service; then
+    systemctl stop neutral-ipc.service
+    echo "Stopped neutral-ipc service"
+fi
+
+if systemctl is-enabled --quiet neutral-ipc.service; then
+    systemctl disable neutral-ipc.service
+    echo "Disabled neutral-ipc service"
+fi
+
+systemctl daemon-reload
+echo "neutral-ipc pre-removal script completed"
