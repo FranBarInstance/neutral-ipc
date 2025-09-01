@@ -1,0 +1,63 @@
+name: Build DEB and Create Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build-deb:
+    name: Build DEB Package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: Install cargo-deb
+      run: cargo install cargo-deb
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev pkg-config
+
+    - name: Build DEB package
+      run: cargo deb
+
+    - name: Verify DEB file
+      run: |
+        echo "Generated DEB package:"
+        ls -la target/debian/*.deb
+        echo "Build completed successfully"
+
+    - name: Create GitHub Release with DEB
+      uses: softprops/action-gh-release@v1
+      with:
+        files: target/debian/*.deb
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+        body: |
+          ## 📦 Automated DEB Package Release
+
+          This release was automatically generated when pushing a git tag.
+
+          ### 📋 Installation Instructions
+
+          **Install the DEB package:**
+          ```bash
+          sudo dpkg -i *.deb
+          sudo apt-get install -f  # Fix missing dependencies
+          ```
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
