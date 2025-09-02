@@ -338,7 +338,6 @@ name = "neutral-ipc"
 version = "1.3.0-beta2"
 dependencies = [
  "neutralts",
- "pyo3",
  "serde",
  "serde_json",
  "tokio",

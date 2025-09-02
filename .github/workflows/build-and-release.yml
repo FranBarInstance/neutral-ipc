@@ -1,4 +1,4 @@
-name: Build Multi-Platform Binaries and DEB Package
+name: Build DEB and Create Release
 
 on:
   push:
@@ -7,81 +7,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-multi-platform:
-    name: Build for ${{ matrix.target }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-gnu
-            os: linux
-            archive: tar.gz
-          - target: x86_64-unknown-linux-musl
-            os: linux
-            archive: tar.gz
-          - target: aarch64-unknown-linux-gnu
-            os: linux
-            archive: tar.gz
-          - target: x86_64-apple-darwin
-            os: macos
-            archive: zip
-          - target: aarch64-apple-darwin
-            os: macos
-            archive: zip
-          - target: x86_64-pc-windows-msvc
-            os: windows
-            archive: zip
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install Rust toolchain
-      uses: actions-rust-lang/setup-rust-toolchain@v1
-      with:
-        toolchain: stable
-        target: ${{ matrix.target }}
-        override: true
-
-    - name: Install build dependencies (Linux)
-      if: matrix.os == 'linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libssl-dev pkg-config
-        # Dependencias específicas para targets
-        if [ "${{ matrix.target }}" = "x86_64-unknown-linux-gnu" ]; then
-          sudo apt-get install -y gcc-x86-64-linux-gnu
-        elif [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-        fi
-
-    - name: Build binary
-      run: cargo build --release --target ${{ matrix.target }}
-
-    - name: Strip binary (Linux/MacOS)
-      if: matrix.os != 'windows'
-      run: |
-        strip target/${{ matrix.target }}/release/neutral-ipc${{ matrix.os == 'windows' && '.exe' || '' }}
-
-    - name: Create archive
-      run: |
-        cd target/${{ matrix.target }}/release/
-        if [ "${{ matrix.archive }}" = "tar.gz" ]; then
-          tar czf ../../../neutral-ipc-${{ matrix.target }}.${{ matrix.archive }} neutral-ipc${{ matrix.os == 'windows' && '.exe' || '' }}
-        else
-          zip -r ../../../neutral-ipc-${{ matrix.target }}.${{ matrix.archive }} neutral-ipc${{ matrix.os == 'windows' && '.exe' || '' }}
-        fi
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: neutral-ipc-${{ matrix.target }}
-        path: neutral-ipc-${{ matrix.target }}.${{ matrix.archive }}
-
   build-deb:
     name: Build DEB Package
     runs-on: ubuntu-latest
-    needs: build-multi-platform
     permissions:
       contents: write
 
@@ -107,51 +35,30 @@ jobs:
     - name: Build DEB package
       run: cargo deb
 
-    - name: Download all binaries
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
+    - name: Verify DEB file
+      run: |
+        echo "Generated DEB package:"
+        ls -la target/debian/*.deb
+        echo "Build completed successfully"
 
-    - name: List artifacts
-      run: ls -la artifacts/
-
-    - name: Create GitHub Release with all assets
+    - name: Create GitHub Release with DEB
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          target/debian/*.deb
-          artifacts/**/*
+        files: target/debian/*.deb
         generate_release_notes: true
         draft: false
         prerelease: false
         body: |
-          ## 📦 Multi-Platform Release
+          ## 📦 Automated DEB Package Release
 
-          This release contains binaries for multiple platforms and a DEB package.
+          This release was automatically generated when pushing a git tag.
 
           ### 📋 Installation Instructions
 
-          **DEB Package (Ubuntu/Debian):**
+          **Install the DEB package:**
           ```bash
-          sudo dpkg -i neutral-ipc*.deb
+          sudo dpkg -i *.deb
           sudo apt-get install -f  # Fix missing dependencies
-          ```
-
-          **Binary installation:**
-          - Extract the archive for your platform
-          - Copy the binary to a directory in your PATH (e.g., `/usr/local/bin`)
-          - Make it executable: `chmod +x neutral-ipc`
-
-          ### Supported Platforms:
-          - Linux (x86_64, aarch64) - GNU and MUSL
-          - macOS (x86_64, Apple Silicon)
-          - Windows (x86_64)
-
-          ### Systemd Service (Linux)
-          After installing the DEB package:
-          ```bash
-          sudo systemctl enable neutral-ipc
-          sudo systemctl start neutral-ipc
           ```
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
