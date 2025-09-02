@@ -20,10 +20,19 @@ if [ -f "/etc/neutral-ipc-cfg.json" ]; then
 fi
 
 systemctl daemon-reload
+
 if systemctl enable neutral-ipc.service; then
     echo "Service neutral-ipc enabled successfully"
 else
     echo "Warning: Failed to enable neutral-ipc service" >&2
 fi
 
+if systemctl start neutral-ipc.service; then
+    echo "Service neutral-ipc started successfully"
+else
+    echo "Warning: Failed to start neutral-ipc service" >&2
+fi
+
 echo "neutral-ipc installation completed successfully"
+
+exit 0
