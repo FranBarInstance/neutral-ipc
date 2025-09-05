@@ -43,4 +43,5 @@ There are different clients, it is implemented as a class, place it and act acco
 
 It is accompanied by a class with the configuration that you can change according to the configuration of your IPC server.
 
-[more info](https://github.com/FranBarInstance/neutral-ipc)
+[examples](https://github.com/FranBarInstance/neutralts-docs/tree/master/examples)
+[repository](https://github.com/FranBarInstance/neutral-ipc)
