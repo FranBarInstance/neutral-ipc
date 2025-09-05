@@ -4,4 +4,8 @@
 __pycache__/
 *.py[cod]
 .kilocodeignore
-/clients
+/clients/go/
+/clients/java/
+/clients/node/
+/clients/php/
+/clients/rust/
