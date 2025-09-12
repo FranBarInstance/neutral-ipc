@@ -1,90 +1,68 @@
-Neutral TS Python IPC Client
-============================================
+# Neutral TS IPC Client Python
 
-Requires the IPC server: [Neutral TS IPC Server](https://github.com/FranBarInstance/neutral-ipc/releases)
+This package provides a minimal Python client for Neutral TS templates using the IPC server.
 
-See: [Examples](https://github.com/FranBarInstance/neutralts-docs/tree/master/examples/python)
+The client exposes `NeutralIpcTemplate` which lets you render a template by sending a schema
+and template path (or source) to the IPC server and receiving the rendered content.
 
-Use:
+Alternatively, you can use Neutral TS as a package without needing an IPC server:
+[pypi.org/project/neutraltemplate/](https://pypi.org/project/neutraltemplate/)
 
-```
+Example
+-------
+
+```python
+import json  # Required to pass the schema as json to NeutralIpcTemplate
+import os  # Required to determine the path of the .ntpl template
+import sys
+
+# Add parent directory to sys.path to find sibling packages
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+
+# Import NeutralIpcTemplate:
+# https://github.com/FranBarInstance/neutral-ipc/tree/master/clients
 from neutral_ipc_template import NeutralIpcTemplate
 
-schema = """
-{
-    "config": {
-        "cache_prefix": "neutral-cache",
-        "cache_dir": "",
-        "cache_on_post": false,
-        "cache_on_get": true,
-        "cache_on_cookies": true,
-        "cache_disable": false,
-        "disable_js": false,
-        "filter_all": false
-    },
-    "inherit": {
-        "snippets": {},
-        "declare": {},
-        "locale": {
-            "current": "en",
-            "trans": {
-                "en": {
-                    "Hello nts": "Hello",
-                    "ref:greeting-nts": "Hello"
-                },
-                "es": {
-                    "Hello nts": "Hola",
-                    "ref:greeting-nts": "Hola"
-                },
-                "el": {
-                    "Hello nts": "Γεια σας",
-                    "ref:greeting-nts": "Γεια σας"
-                }
-            }
-        }
-    },
+# The schema contains among other things the data and variables for the template
+schema = {
     "data": {
-        "CONTEXT": {
-            "ROUTE": "",
-            "HOST": "",
-            "GET": {},
-            "POST": {},
-            "HEADERS": {},
-            "FILES": {},
-            "COOKIES": {},
-            "SESSION": {},
-            "ENV": {}
-        },
-        "hello": "Hello",
-        "arr": {
-            "hello": "Hello"
-        }
+        "hello": "Hello World"
     }
 }
-"""
 
-template = NeutralIpcTemplate("file.ntpl", schema)
-contents = template.render()
+# Determine the template full path
+template = os.path.dirname(os.path.abspath(__file__)) + "/template.ntpl"
+
+# Pass the schema as json to NeutralTemplate
+schema_json = json.dumps(schema_dict)
+
+# Create an instance of NeutralTemplate
+ipc_template = NeutralIpcTemplate(template, schema_json)
+
+# Render the template
+contents = ipc_template.render()
 
 # e.g.: 200
-status_code = template.get_status_code()
+status_code = ipc_template.get_status_code()
 
 # e.g.: OK
-status_text = template.get_status_text()
+status_text = ipc_template.get_status_text()
 
 # empty if no error
-status_param = template.get_status_param()
+status_param = ipc_template.get_status_param()
 
-# act accordingly at this point according to your framework
+# Act according to your framework to display the content
+# for this example, simply output
+print(contents)
+
 ```
 
 Links
 -----
 
-Neutral TS template engine Python Package.
+Neutral TS template engine.
 
-- [Template docs](https://franbarinstance.github.io/neutralts-docs/docs/neutralts/doc/)
-- [Repository](https://github.com/FranBarInstance/neutraltemplate)
+- [Template docs](https://github.com/FranBarInstance/neutralts-docs/docs/neutralts/doc/)
+- [Repository](https://github.com/FranBarInstance/neutralts)
 - [Crate](https://crates.io/crates/neutralts)
-- [PYPI Package](https://pypi.org/project/neutraltemplate/)
-- [Examples](https://github.com/FranBarInstance/neutralts-docs/tree/master/examples/python)
+- [Examples](https://github.com/FranBarInstance/neutralts-docs/tree/master/examples)
