@@ -1,5 +1,5 @@
 Neutral TS Rust IPC Client
-==========================.
+==========================
 
 - Requires the IPC server: [Neutral TS IPC Server](https://github.com/FranBarInstance/neutral-ipc/releases)
 - Requires the Rust IPC client: [Neutral TS Rust IPC Client](https://crates.io/crates/neutralipcrs)
