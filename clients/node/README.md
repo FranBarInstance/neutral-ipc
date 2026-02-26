@@ -8,7 +8,12 @@ This package provides a minimal Node.js client for Neutral TS templates using th
 The client exposes `NeutralIpcTemplate` which lets you render a template by sending a schema
 and template path (or source) to the IPC server and receiving the rendered content.
 
-Example
+You can send the schema in JSON or MsgPack format:
+
+- JSON: `schemaType = NeutralIpcRecord.CONTENT_JSON` (default)
+- MsgPack: `schemaType = NeutralIpcRecord.CONTENT_MSGPACK`
+
+Example (JSON)
 -------
 
 ```javascript
@@ -27,12 +32,52 @@ const schema = {
 const path = require('path');
 const template = path.join(__dirname, 'template.ntpl');
 
-// Create an instance of NeutralIpcTemplate (accepts object or JSON string for schema)
+// Create an instance of NeutralIpcTemplate (JSON format - default)
 const ipcTemplate = new NeutralIpcTemplate(template, schema);
 
 // Render the template (synchronous or asynchronous depending on the client implementation)
 // Here we assume a synchronous-style API for simplicity. Consult the implementation in
 // `NeutralIpcTemplate.js` for details.
+const contents = ipcTemplate.render();
+
+// e.g.: 200
+const status_code = ipcTemplate.get_status_code();
+
+// e.g.: OK
+const status_text = ipcTemplate.get_status_text();
+
+// empty if no error
+const status_param = ipcTemplate.get_status_param();
+
+// Act according to your framework to display the content
+// for this example, simply output
+console.log(contents);
+```
+
+Example (MsgPack)
+-------
+
+```javascript
+// Require the client files included in this example
+// https://github.com/FranBarInstance/neutral-ipc/tree/master/clients
+const NeutralIpcTemplate = require('./neutral_ipc_template/NeutralIpcTemplate');
+const NeutralIpcRecord = require('./neutral_ipc_template/NeutralIpcTemplate'); // or extract the record class
+
+// The schema contains among other things the data and variables for the template
+const schema = {
+  data: {
+    hello: 'Hello World'
+  }
+};
+
+// Determine the template full path
+const path = require('path');
+const template = path.join(__dirname, 'template.ntpl');
+
+// Create an instance of NeutralIpcTemplate (MsgPack format)
+const ipcTemplate = new NeutralIpcTemplate(template, schema, NeutralIpcRecord.CONTENT_PATH, NeutralIpcRecord.CONTENT_MSGPACK);
+
+// Render the template
 const contents = ipcTemplate.render();
 
 // e.g.: 200

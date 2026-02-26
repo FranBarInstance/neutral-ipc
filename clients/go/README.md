@@ -7,7 +7,12 @@ This package provides a minimal Go client for Neutral TS templates using the IPC
 The client exposes `NeutralIpcTemplate` which lets you render a template by sending a schema
 and template path (or source) to the IPC server and receiving the rendered content.
 
-Example
+You can send the schema in JSON or MsgPack format:
+
+- JSON: `NewNeutralIpcTemplate(template, schema)` (default)
+- MsgPack: `NewNeutralIpcTemplateWithSchemaType(template, schema, ContentMsgpack)`
+
+Example (JSON)
 -------
 
 ```go
@@ -44,8 +49,61 @@ func main() {
     dir := filepath.Dir(b)
     template := filepath.Join(dir, "template.ntpl")
 
-    // Create a NeutralIpcTemplate instance
+    // Create a NeutralIpcTemplate instance (JSON format)
     ipc := neutral_ipc_template.NewNeutralIpcTemplate(template, schemaJSON)
+
+    // Render the template
+    contents := ipc.Render()
+
+    // e.g.: 200
+    statusCode := ipc.GetStatusCode()
+
+    // e.g.: OK
+    statusText := ipc.GetStatusText()
+
+    // empty if no error
+    statusParam := ipc.GetStatusParam()
+
+    // Act according to your framework to display the content
+    // for this example, simply output
+    fmt.Println(contents)
+}
+```
+
+Example (MsgPack)
+-------
+
+```go
+package main
+
+import (
+    "fmt"
+    "path/filepath"
+    "runtime"
+    "os"
+
+    // Import the Neutral IPC client package.
+    // The client sources are available at:
+    // https://github.com/FranBarInstance/neutral-ipc/tree/master/clients
+    // Replace the import path below according to your module layout.
+    "neutral_ipc_template"
+)
+
+func main() {
+    // The schema contains the data and variables for the template
+    schema := map[string]interface{}{
+        "data": map[string]interface{}{
+            "hello": "Hello World",
+        },
+    }
+
+    // Determine the template full path (template.ntpl should be next to this README)
+    _, b, _, _ := runtime.Caller(0)
+    dir := filepath.Dir(b)
+    template := filepath.Join(dir, "template.ntpl")
+
+    // Create a NeutralIpcTemplate instance (MsgPack format)
+    ipc := neutral_ipc_template.NewNeutralIpcTemplateWithSchemaType(template, schema, neutral_ipc_template.ContentMsgpack)
 
     // Render the template
     contents := ipc.Render()

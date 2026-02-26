@@ -3,10 +3,16 @@ Neutral IPC server
 
 A server and different clients for different programming languages are provided for [Neutral TS](https://github.com/FranBarInstance/neutralts)
 
+The IPC server supports sending schemas in **JSON** or **MsgPack** format. MsgPack provides a more compact binary serialization format.
+
 IPC Server
 ----------
 
 Currently the IPC server is under development, you can use it but you must take into account that the stable version could present incompatibilities, for example in the configuration.
+
+**Schema formats:**
+- `content_format_1 = 10` → JSON (default)
+- `content_format_1 = 50` → MsgPack
 
 For a peronalized configuration modify neutral-ipc-cfg.json and put it in the /etc directory, this is the default configuration:
 

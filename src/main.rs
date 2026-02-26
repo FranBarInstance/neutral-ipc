@@ -15,9 +15,9 @@ use neutralts::Template;
 //
 // \x00              # reserved
 // \x00              # control (action/status) (10 = parse template)
-// \x00              # content-format 1 (10 = JSON, 20 = file path, 30 = plaintext, 40 = binary)
+// \x00              # content-format 1 (10 = JSON, 20 = file path, 30 = plaintext, 40 = binary, 50 = MsgPack)
 // \x00\x00\x00\x00  # content-length 1 big endian byte order
-// \x00              # content-format 2 (10 = JSON, 20 = file path, 30 = plaintext, 40 = binary)
+// \x00              # content-format 2 (10 = JSON, 20 = file path, 30 = plaintext, 40 = binary, 50 = MsgPack)
 // \x00\x00\x00\x00  # content-length 2 big endian byte order (can be zero)
 //
 // All text utf8
@@ -27,6 +27,7 @@ const CTRL_PARSE_TEMPLATE: u8 = 10;
 const CTRL_STATUS_OK: u8 = 0;
 const _CTRL_STATUS_KO: u8 = 1;
 const CONTENT_JSON: u8 = 10;
+const CONTENT_MSGPACK: u8 = 50;
 const CONTENT_PATH: u8 = 20;
 const CONTENT_TEXT: u8 = 30;
 const _CONTENT_BIN: u8 = 40;
@@ -167,8 +168,8 @@ async fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     if let Some(header) = Header::from_bytes(&header_bytes) {
         match header.control {
             CTRL_PARSE_TEMPLATE => {
-                if header.content_format_1 != CONTENT_JSON {
-                    return Err("Invalid content_format_1. Expected JSON.".into());
+                if header.content_format_1 != CONTENT_JSON && header.content_format_1 != CONTENT_MSGPACK {
+                    return Err("Invalid content_format_1. Expected JSON or MSGPACK.".into());
                 }
 
                 if header.content_format_2 != CONTENT_TEXT && header.content_format_2 != CONTENT_PATH {
@@ -181,13 +182,10 @@ async fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
                 let mut content_2_buffer = vec![0; header.content_length_2 as usize];
                 stream.read_exact(&mut content_2_buffer).await?;
 
-                let json_content = String::from_utf8(content_1_buffer)
-                    .map_err(|e| format!("Failed to parse json content: {}", e))?;
-
                 let text_content = String::from_utf8(content_2_buffer)
                     .map_err(|e| format!("Failed to parse text content: {}", e))?;
 
-                let result = parse_template(&json_content, &text_content, header.content_format_2);
+                let result = parse_template(&content_1_buffer, &text_content, header.content_format_1, header.content_format_2);
                 let response_header = Header {
                     reserved: 0,
                     control: result.status,
@@ -212,9 +210,17 @@ async fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn parse_template(schema: &str, tpl: &str, tpl_type: u8) -> ParseTemplateResult {
+fn parse_template(schema: &[u8], tpl: &str, schema_type: u8, tpl_type: u8) -> ParseTemplateResult {
     let mut template = Template::new().unwrap();
-    template.merge_schema_str(schema).unwrap();
+
+    if schema_type == CONTENT_MSGPACK {
+        template.merge_schema_msgpack(schema).unwrap();
+    } else {
+        let schema_str = String::from_utf8(schema.to_vec())
+            .map_err(|e| format!("Failed to parse schema: {}", e))
+            .unwrap();
+        template.merge_schema_str(&schema_str).unwrap();
+    }
 
     if tpl_type == CONTENT_PATH {
         template.set_src_path(tpl).unwrap();
@@ -234,5 +240,78 @@ fn parse_template(schema: &str, tpl: &str, tpl_type: u8) -> ParseTemplateResult 
         json: result.to_string(),
         text: contents,
         status: CTRL_STATUS_OK,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_header_from_bytes() {
+        let bytes = [0, 10, 10, 0, 0, 0, 100, 30, 0, 0, 0, 50];
+        let header = Header::from_bytes(&bytes).unwrap();
+
+        assert_eq!(header.reserved, 0);
+        assert_eq!(header.control, CTRL_PARSE_TEMPLATE);
+        assert_eq!(header.content_format_1, CONTENT_JSON);
+        assert_eq!(header.content_length_1, 100);
+        assert_eq!(header.content_format_2, CONTENT_TEXT);
+        assert_eq!(header.content_length_2, 50);
+    }
+
+    #[test]
+    fn test_header_to_bytes() {
+        let header = Header {
+            reserved: 0,
+            control: CTRL_PARSE_TEMPLATE,
+            content_format_1: CONTENT_MSGPACK,
+            content_length_1: 256,
+            content_format_2: CONTENT_PATH,
+            content_length_2: 128,
+        };
+
+        let bytes = header.to_bytes();
+        assert_eq!(bytes[0], 0);
+        assert_eq!(bytes[1], CTRL_PARSE_TEMPLATE);
+        assert_eq!(bytes[2], CONTENT_MSGPACK);
+        assert_eq!([bytes[3], bytes[4], bytes[5], bytes[6]], [0, 0, 1, 0]); // 256
+        assert_eq!(bytes[7], CONTENT_PATH);
+        assert_eq!([bytes[8], bytes[9], bytes[10], bytes[11]], [0, 0, 0, 128]); // 128
+    }
+
+    #[test]
+    fn test_header_roundtrip() {
+        let original = Header {
+            reserved: 0,
+            control: CTRL_STATUS_OK,
+            content_format_1: CONTENT_MSGPACK,
+            content_length_1: 512,
+            content_format_2: CONTENT_TEXT,
+            content_length_2: 256,
+        };
+
+        let bytes = original.to_bytes();
+        let parsed = Header::from_bytes(&bytes).unwrap();
+
+        assert_eq!(original.reserved, parsed.reserved);
+        assert_eq!(original.control, parsed.control);
+        assert_eq!(original.content_format_1, parsed.content_format_1);
+        assert_eq!(original.content_length_1, parsed.content_length_1);
+        assert_eq!(original.content_format_2, parsed.content_format_2);
+        assert_eq!(original.content_length_2, parsed.content_length_2);
+    }
+
+    #[test]
+    fn test_content_format_constants() {
+        assert_eq!(CONTENT_JSON, 10);
+        assert_eq!(CONTENT_MSGPACK, 50);
+        assert_eq!(CONTENT_PATH, 20);
+        assert_eq!(CONTENT_TEXT, 30);
+    }
+
+    #[test]
+    fn test_header_size() {
+        assert_eq!(HEADER_SIZE, 12);
     }
 }
