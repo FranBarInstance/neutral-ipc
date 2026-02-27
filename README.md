@@ -49,5 +49,10 @@ There are different clients, it is implemented as a class, place it and act acco
 
 It is accompanied by a class with the configuration that you can change according to the configuration of your IPC server.
 
-[examples](https://github.com/FranBarInstance/neutralts-docs/tree/master/examples)
-[repository](https://github.com/FranBarInstance/neutral-ipc)
+- [examples](https://github.com/FranBarInstance/neutralts-docs/tree/master/examples)
+- [repository](https://github.com/FranBarInstance/neutral-ipc)
+
+Advanced Python Usage Example
+-----------------------------
+
+For a production-ready Python Flask example, see the **[Neutral Starter Py](https://github.com/FranBarInstance/neutral-starter-py)** repo. It demonstrates scalable architecture, error handling, dependency management, and automated testing.
