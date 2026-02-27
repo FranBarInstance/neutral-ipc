@@ -336,7 +336,7 @@ dependencies = [
 
 [[package]]
 name = "neutral-ipc"
-version = "1.4.0"
+version = "1.4.1"
 dependencies = [
  "neutralts",
  "serde",
@@ -346,9 +346,9 @@ dependencies = [
 
 [[package]]
 name = "neutralts"
-version = "1.4.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99b7028a95c5e57710ce12117ad314eaa77a31d4f660b36653a00ee6e3febd24"
+checksum = "b5e3a7ab607f5b705511b9f5e35f1d31005538a13edefff2558cfc6d9fef6cbd"
 dependencies = [
  "chrono",
  "lazy_static",
