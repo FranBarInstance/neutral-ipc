@@ -336,7 +336,7 @@ dependencies = [
 
 [[package]]
 name = "neutral-ipc"
-version = "1.4.2"
+version = "1.4.3"
 dependencies = [
  "neutralts",
  "serde",
@@ -346,9 +346,9 @@ dependencies = [
 
 [[package]]
 name = "neutralts"
-version = "1.4.2"
+version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e53910fd611360e5d6ef2e6767c467530cd08cec42afa4ffaad3d892adf8bb5"
+checksum = "9584c6362dab2fabfcd9b8a21028f0e9e012b83607f579c7481308fda60bad58"
 dependencies = [
  "chrono",
  "lazy_static",
@@ -506,9 +506,9 @@ checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 
 [[package]]
 name = "rand"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc266eb313df6c5c09c1c7b1fbe2510961e5bcd3add930c1e31f7ed9da0feff8"
+checksum = "d2e8e8bcc7961af1fdac401278c6a831614941f6164ee3bf4ce61b7edb162207"
 dependencies = [
  "chacha20",
  "getrandom",
